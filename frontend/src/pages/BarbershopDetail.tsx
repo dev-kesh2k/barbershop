@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ApiError, api, resolveImageUrl, type Barbershop, type Service } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { maskDdMmYy, parseDdMmYyToIso } from "../lib/format";
 import "./BarbershopDetail.css";
 
 type Step = "services" | "schedule";
@@ -16,6 +17,7 @@ export default function BarbershopDetail() {
   const [step, setStep] = useState<Step>("services");
   const [selectedService, setSelectedService] = useState<string>("");
   const [date, setDate] = useState("");
+  const [dateInput, setDateInput] = useState("");
   const [slots, setSlots] = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState("");
   const [guestName, setGuestName] = useState(
@@ -75,6 +77,7 @@ export default function BarbershopDetail() {
   const openSchedule = (serviceId: string) => {
     setSelectedService(serviceId);
     setDate("");
+    setDateInput("");
     setSlots([]);
     setSelectedSlot("");
     setError("");
@@ -225,11 +228,28 @@ export default function BarbershopDetail() {
               </label>
               <input
                 id="date"
-                type="date"
+                type="text"
                 className="input"
-                min={minDate}
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="dd/mm/aa"
+                maxLength={8}
+                value={dateInput}
+                onChange={(e) => {
+                  const masked = maskDdMmYy(e.target.value);
+                  setDateInput(masked);
+                  const iso = parseDdMmYyToIso(masked);
+                  if (iso && iso >= minDate) {
+                    setDate(iso);
+                    setError("");
+                  } else {
+                    setDate("");
+                    setSelectedSlot("");
+                    if (iso && iso < minDate) {
+                      setError("Escolha uma data a partir de hoje.");
+                    }
+                  }
+                }}
                 required
               />
             </div>

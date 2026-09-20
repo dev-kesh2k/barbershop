@@ -197,13 +197,13 @@ export async function seedDatabase(prisma: PrismaClient) {
     });
   }
 
-  const adminHash = await bcrypt.hash("admin123", 10);
+  const adminHash = await bcrypt.hash("***REMOVIDO***", 10);
   const customerHash = await bcrypt.hash("cliente123", 10);
 
   await prisma.user.create({
     data: {
       name: "Admin Brutus",
-      email: "admin@barbershop.local",
+      email: "jeferson.santana.s@hotmail.com",
       passwordHash: adminHash,
       role: "BARBER_ADMIN",
       barbershopId: barbershop.id,

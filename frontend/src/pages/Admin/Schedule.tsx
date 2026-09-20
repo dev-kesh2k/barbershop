@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { ApiError, api, type OpeningHour, type ScheduleBlock } from "../../lib/api";
 import AdminNav from "../../components/AdminNav";
+import { formatDdMmYyTime } from "../../lib/format";
 import "./Schedule.css";
 
 const WEEKDAYS = [
@@ -151,16 +152,7 @@ export default function AdminSchedule() {
                   <div className="admin-booking-main">
                     <strong>{booking.service.name}</strong>
                     <p className="admin-booking-when">
-                      {d.toLocaleDateString("pt-BR", {
-                        weekday: "short",
-                        day: "2-digit",
-                        month: "short",
-                      })}{" "}
-                      ·{" "}
-                      {d.toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDdMmYyTime(d)}
                     </p>
                     <p className="admin-booking-client">
                       {booking.user.name || "Cliente"}
@@ -213,11 +205,7 @@ export default function AdminSchedule() {
                   <div className="admin-booking-main">
                     <strong>{booking.service.name}</strong>
                     <p className="admin-booking-when">
-                      {d.toLocaleDateString("pt-BR")} ·{" "}
-                      {d.toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDdMmYyTime(d)}
                     </p>
                     <p className="admin-booking-client">
                       {booking.user.name || "Cliente"}
@@ -333,8 +321,7 @@ export default function AdminSchedule() {
               <div key={block.id} className="card card-body block-row">
                 <div>
                   <strong>
-                    {new Date(block.startsAt).toLocaleString("pt-BR")} —{" "}
-                    {new Date(block.endsAt).toLocaleString("pt-BR")}
+                    {formatDdMmYyTime(block.startsAt)} — {formatDdMmYyTime(block.endsAt)}
                   </strong>
                   {block.reason && (
                     <p style={{ color: "var(--text-muted)", margin: "0.25rem 0 0" }}>
