@@ -114,7 +114,7 @@ export default function Login() {
         </button>
 
         <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: "1rem" }}>
-          Demo: admin@barbershop.local / admin123
+          Demo: jeferson.santana.s@hotmail.com / ./*Copacol@21
         </p>
       </form>
     </>

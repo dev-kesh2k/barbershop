@@ -7,12 +7,12 @@ export default defineConfig({
   server: {
     proxy: {
       "/barbershop/api": {
-        target: "http://127.0.0.1:4000",
+        target: "http://127.0.0.1:4002",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/barbershop\/api/, ""),
       },
       "/barbershop/uploads": {
-        target: "http://127.0.0.1:4000",
+        target: "http://127.0.0.1:4002",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/barbershop\/uploads/, "/uploads"),
       },

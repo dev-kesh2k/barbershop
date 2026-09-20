@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiError, api, type Booking } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { formatDdMmYyTime } from "../lib/format";
 import "./Bookings.css";
 
 const statusLabel: Record<Booking["status"], string> = {
@@ -174,16 +175,7 @@ export default function Bookings() {
                 <div className="booking-main">
                   <strong>{booking.service.name}</strong>
                   <p className="booking-when">
-                    {d.toLocaleDateString("pt-BR", {
-                      weekday: "short",
-                      day: "2-digit",
-                      month: "short",
-                    })}{" "}
-                    ·{" "}
-                    {d.toLocaleTimeString("pt-BR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatDdMmYyTime(d)}
                   </p>
                   <div className="booking-meta">
                     <span className={`badge badge-${booking.status.toLowerCase()}`}>

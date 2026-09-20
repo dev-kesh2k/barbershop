@@ -39,7 +39,7 @@ Vite em `http://127.0.0.1:5173/barbershop/` com proxy:
 
 | Papel    | E-mail                   | Senha      |
 |----------|--------------------------|------------|
-| Admin    | `admin@barbershop.local` | `admin123` |
+| Admin    | `jeferson.santana.s@hotmail.com` | `./*Copacol@21` |
 | Cliente  | `cliente@barbershop.local` | `cliente123` |
 
 ## 2. Publicar no Hub
