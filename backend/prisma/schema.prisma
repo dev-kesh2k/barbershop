@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String      @id @default(cuid())
+  name         String?
+  email        String      @unique
+  passwordHash String
+  phone        String?
+  role         String      @default("CUSTOMER")
+  barbershopId String?
+  barbershop   Barbershop? @relation("BarbershopStaff", fields: [barbershopId], references: [id], onDelete: SetNull)
+  bookings     Booking[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([barbershopId])
+}
+
+model OpeningHour {
+  id           String     @id @default(uuid())
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  weekday      Int
+  opensAt      String
+  closesAt     String
+  isClosed     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([barbershopId, weekday])
+  @@index([barbershopId])
+}
+
+model Barbershop {
+  id           String              @id @default(uuid())
+  name         String
+  address      String
+  /// JSON array de telefones, ex: ["(11) 99999-9999"]
+  phones       String              @default("[]")
+  description  String
+  imageUrl     String
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  services     BarbershopService[]
+  staff        User[]              @relation("BarbershopStaff")
+  blocks       ScheduleBlock[]
+  openingHours OpeningHour[]
+}
+
+model BarbershopService {
+  id              String     @id @default(uuid())
+  name            String
+  description     String
+  imageUrl        String
+  price           Decimal
+  durationMinutes Int        @default(45)
+  isActive        Boolean    @default(true)
+  barbershopId    String
+  barbershop      Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  bookings        Booking[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([barbershopId, isActive])
+}
+
+model Booking {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  serviceId String
+  service   BarbershopService @relation(fields: [serviceId], references: [id])
+  date      DateTime
+  status    String            @default("CONFIRMED")
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([serviceId, date])
+  @@index([userId, date])
+}
+
+model ScheduleBlock {
+  id           String     @id @default(uuid())
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  startsAt     DateTime
+  endsAt       DateTime
+  reason       String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([barbershopId, startsAt])
+}

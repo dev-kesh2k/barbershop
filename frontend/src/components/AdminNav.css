@@ -1,0 +1,36 @@
+.admin-nav {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0 0 1.1rem;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.15rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.admin-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-nav a {
+  flex: 0 0 auto;
+  min-height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-nav a.active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: transparent;
+}
