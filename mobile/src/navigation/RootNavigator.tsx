@@ -200,9 +200,20 @@ export default function RootNavigator() {
 
 const styles = StyleSheet.create({
   shell: { flex: 1, alignItems: "center" },
-  column: { flex: 1, width: "100%", maxWidth: Platform.OS === "web" ? 430 : undefined, backgroundColor: colors.bg },
-  columnWide: { maxWidth: 1040 },
-  barWrap: { position: "absolute", left: 0, right: 0, bottom: 0, alignItems: "center" },
+  column: {
+    flex: 1,
+    width: "100%",
+    maxWidth: Platform.OS === "web" ? 1120 : undefined,
+    backgroundColor: colors.bg,
+  },
+  columnWide: { maxWidth: 1120 },
+  barWrap: {
+    position: Platform.OS === "web" ? ("fixed" as "absolute") : "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+  },
   pill: {
     flexDirection: "row",
     backgroundColor: colors.white,
