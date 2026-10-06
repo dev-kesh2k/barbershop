@@ -1,7 +1,7 @@
 import "react-native-gesture-handler";
 import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from "@expo-google-fonts/plus-jakarta-sans";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, Platform, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/lib/auth";
 import RootNavigator from "./src/navigation/RootNavigator";
@@ -31,7 +31,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <View style={{ flex: 1, backgroundColor: Platform.OS === "web" ? colors.canvas : colors.bg }}>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <AuthProvider>
           <Gate />
         </AuthProvider>

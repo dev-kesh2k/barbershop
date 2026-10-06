@@ -46,7 +46,7 @@ npx expo start          # celular (Expo Go) e opções de plataforma
 npx expo start --web    # navegador
 ```
 
-No celular, use o Expo Go na mesma rede Wi-Fi. No navegador, as rotas são `/`, `/agendar`, `/servicos`, `/agenda`, `/entrar` e `/admin`. No computador, o cliente fica na coluna do celular; o painel do admin ocupa mais largura. No emulador Android, a API local é `http://10.0.2.2:4002`. No simulador iOS e no navegador, `http://127.0.0.1:4002`.
+No celular, use o Expo Go na mesma rede Wi-Fi. No navegador, as rotas são `/`, `/agendar`, `/servicos`, `/agenda`, `/entrar` e `/admin`. No navegador a página usa a largura da tela. No celular o app continua em tela cheia. No emulador Android, a API local é `http://10.0.2.2:4002`. No simulador iOS e no navegador, `http://127.0.0.1:4002`.
 
 Para apontar outro endereço:
 

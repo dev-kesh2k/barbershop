@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Empty, Loading, Screen, Thumb } from "../components/ui";
@@ -8,6 +8,24 @@ import { useAuth } from "../lib/auth";
 import { useShop } from "../lib/useShop";
 import type { RootStackParamList } from "../navigation/types";
 import { colors, font } from "../theme";
+
+function ServiceTile({
+  item,
+  onPress,
+}: {
+  item: { name: string; imageUrl: string; price: number };
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={styles.tile} onPress={onPress}>
+      <Thumb src={item.imageUrl} label={item.name} size={112} />
+      <Text style={styles.tileName} numberOfLines={3}>
+        {item.name}
+      </Text>
+      <Text style={styles.tilePrice}>{formatMoney(item.price)}</Text>
+    </Pressable>
+  );
+}
 
 function greeting() {
   const hour = new Date().getHours();
@@ -80,17 +98,11 @@ export default function HomeScreen() {
       {services.length === 0 ? (
         <Text style={styles.empty}>Nenhum serviço encontrado.</Text>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
+        <View style={styles.grid}>
           {services.map((item) => (
-            <Pressable key={item.id} style={styles.tile} onPress={() => navigation.navigate("Book", { serviceId: item.id })}>
-              <Thumb src={item.imageUrl} label={item.name} size={112} />
-              <Text style={styles.tileName} numberOfLines={2}>
-                {item.name}
-              </Text>
-              <Text style={styles.tilePrice}>{formatMoney(item.price)}</Text>
-            </Pressable>
+            <ServiceTile key={item.id} item={item} onPress={() => navigation.navigate("Book", { serviceId: item.id })} />
           ))}
-        </ScrollView>
+        </View>
       )}
 
       <View style={styles.section}>
@@ -158,10 +170,21 @@ const styles = StyleSheet.create({
   sectionTitle: { fontFamily: font.extra, fontSize: 18, color: colors.text },
   link: { color: colors.primary, fontFamily: font.semibold },
   empty: { color: colors.muted, fontFamily: font.regular, marginBottom: 16 },
-  hScroll: { gap: 12, paddingBottom: 22 },
-  tile: { width: 132 },
-  tileName: { marginTop: 8, fontFamily: font.bold, color: colors.text, fontSize: 13 },
-  tilePrice: { color: colors.muted, fontFamily: font.semibold, marginTop: 2 },
+  grid: {
+    width: "100%",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 16,
+    marginBottom: 22,
+  },
+  tile: {
+    width: "46%",
+    maxWidth: 180,
+    alignItems: "center",
+  },
+  tileName: { marginTop: 8, fontFamily: font.bold, color: colors.text, fontSize: 13, textAlign: "center" },
+  tilePrice: { color: colors.muted, fontFamily: font.semibold, marginTop: 2, textAlign: "center" },
   shop: {
     flexDirection: "row",
     gap: 12,
