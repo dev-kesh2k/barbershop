@@ -160,9 +160,31 @@ export async function ensureSingleShop(prisma: PrismaClient) {
   return keep.id;
 }
 
+const DEFAULT_BARBERS = [
+  { name: "Lucas Ferreira", title: "Barbeiro sênior" },
+  { name: "Diego Alves", title: "Barbeiro" },
+  { name: "Rafael Costa", title: "Barbeiro" },
+];
+
+export async function ensureBarbers(prisma: PrismaClient, barbershopId: string) {
+  const count = await prisma.barber.count({ where: { barbershopId } });
+  if (count > 0) return;
+
+  await prisma.barber.createMany({
+    data: DEFAULT_BARBERS.map((person) => ({
+      barbershopId,
+      name: person.name,
+      title: person.title,
+      imageUrl: "",
+    })),
+  });
+  console.log(`Barbeiros criados para a loja ${barbershopId}.`);
+}
+
 export async function seedDatabase(prisma: PrismaClient) {
   const keptId = await ensureSingleShop(prisma);
   if (keptId) {
+    await ensureBarbers(prisma, keptId);
     console.log("Seed skipped: barbershop already exists (single shop ensured).");
     return;
   }
@@ -197,13 +219,15 @@ export async function seedDatabase(prisma: PrismaClient) {
     });
   }
 
-  const adminHash = await bcrypt.hash("./*Copacol@21", 10);
+  const adminEmail = process.env.ADMIN_EMAIL?.trim() || "jeferson.santana.s@hotmail.com";
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim() || "./*Copacol@21";
+  const adminHash = await bcrypt.hash(adminPassword, 10);
   const customerHash = await bcrypt.hash("cliente123", 10);
 
   await prisma.user.create({
     data: {
       name: "Admin Brutus",
-      email: "jeferson.santana.s@hotmail.com",
+      email: adminEmail,
       passwordHash: adminHash,
       role: "BARBER_ADMIN",
       barbershopId: barbershop.id,
@@ -218,6 +242,8 @@ export async function seedDatabase(prisma: PrismaClient) {
       role: "CUSTOMER",
     },
   });
+
+  await ensureBarbers(prisma, barbershop.id);
 
   console.log("Seed concluído: Brutus Barber (1 loja).");
 }

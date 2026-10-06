@@ -24,9 +24,18 @@ const corsOrigins = process.env.CORS_ORIGINS?.split(",")
   .map((o) => o.trim())
   .filter(Boolean);
 
+function isAllowedOrigin(origin: string | undefined): boolean {
+  if (!origin || !corsOrigins?.length) return true;
+  if (corsOrigins.includes(origin)) return true;
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
+
 app.use(
   cors({
-    origin: corsOrigins?.length ? corsOrigins : "*",
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) callback(null, origin ?? true);
+      else callback(null, false);
+    },
     credentials: true,
   }),
 );

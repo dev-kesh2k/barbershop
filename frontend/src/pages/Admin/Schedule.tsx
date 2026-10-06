@@ -24,6 +24,7 @@ interface AdminBooking {
     phone: string | null;
     email: string;
   };
+  barber?: { id: string; name: string } | null;
   service: {
     id: string;
     name: string;
@@ -156,6 +157,7 @@ export default function AdminSchedule() {
                     </p>
                     <p className="admin-booking-client">
                       {booking.user.name || "Cliente"}
+                      {booking.barber?.name ? ` · ${booking.barber.name}` : ""}
                       {booking.user.phone ? ` · ${booking.user.phone}` : ""}
                     </p>
                     <div className="admin-booking-meta">
@@ -209,6 +211,7 @@ export default function AdminSchedule() {
                     </p>
                     <p className="admin-booking-client">
                       {booking.user.name || "Cliente"}
+                      {booking.barber?.name ? ` · ${booking.barber.name}` : ""}
                       {booking.user.phone ? ` · ${booking.user.phone}` : ""}
                     </p>
                     <span className={`badge badge-${booking.status.toLowerCase()}`}>

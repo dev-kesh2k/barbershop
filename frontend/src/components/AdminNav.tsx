@@ -8,6 +8,7 @@ export default function AdminNav() {
         Dashboard
       </NavLink>
       <NavLink to="/admin/services">Serviços</NavLink>
+      <NavLink to="/admin/barbers">Barbeiros</NavLink>
       <NavLink to="/admin/schedule">Agenda</NavLink>
       <NavLink to="/admin/settings">Config</NavLink>
     </nav>
