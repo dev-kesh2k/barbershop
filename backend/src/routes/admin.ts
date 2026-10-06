@@ -80,6 +80,7 @@ router.get("/bookings", asyncHandler(async (req, res) => {
     orderBy: { date: "asc" },
     include: {
       user: { select: { id: true, name: true, phone: true, email: true } },
+      barber: { select: { id: true, name: true } },
       service: {
         select: {
           id: true,
@@ -133,6 +134,7 @@ router.patch("/bookings/:id", asyncHandler(async (req, res) => {
     data: { status: parsed.data.status },
     include: {
       user: { select: { id: true, name: true, phone: true, email: true } },
+      barber: { select: { id: true, name: true } },
       service: {
         select: { id: true, name: true, price: true, durationMinutes: true },
       },
@@ -348,6 +350,66 @@ router.patch("/settings", asyncHandler(async (req, res) => {
       phones: parsePhones(barbershop.phones),
     },
   });
+}));
+
+const barberSchema = z.object({
+  name: z.string().min(2),
+  title: z.string().min(1).optional(),
+  imageUrl: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+router.get("/barbers", asyncHandler(async (req, res) => {
+  const barbers = await prisma.barber.findMany({
+    where: { barbershopId: req.user!.barbershopId! },
+    orderBy: { name: "asc" },
+  });
+  res.json({ barbers });
+}));
+
+router.post("/barbers", asyncHandler(async (req, res) => {
+  const parsed = barberSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." });
+    return;
+  }
+
+  const barber = await prisma.barber.create({
+    data: {
+      name: parsed.data.name.trim(),
+      title: parsed.data.title?.trim() || "Barbeiro",
+      imageUrl: parsed.data.imageUrl?.trim() || "",
+      isActive: parsed.data.isActive ?? true,
+      barbershopId: req.user!.barbershopId!,
+    },
+  });
+  res.status(201).json({ barber });
+}));
+
+router.patch("/barbers/:id", asyncHandler(async (req, res) => {
+  const parsed = barberSchema.partial().safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." });
+    return;
+  }
+
+  const data: Prisma.BarberUpdateManyMutationInput = {};
+  if (parsed.data.name !== undefined) data.name = parsed.data.name.trim();
+  if (parsed.data.title !== undefined) data.title = parsed.data.title.trim() || "Barbeiro";
+  if (parsed.data.imageUrl !== undefined) data.imageUrl = parsed.data.imageUrl.trim();
+  if (parsed.data.isActive !== undefined) data.isActive = parsed.data.isActive;
+
+  const result = await prisma.barber.updateMany({
+    where: { id: req.params.id, barbershopId: req.user!.barbershopId! },
+    data,
+  });
+  if (result.count === 0) {
+    res.status(404).json({ error: "Barbeiro não encontrado." });
+    return;
+  }
+
+  const barber = await prisma.barber.findUnique({ where: { id: req.params.id } });
+  res.json({ barber });
 }));
 
 export default router;

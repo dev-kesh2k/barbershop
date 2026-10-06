@@ -104,6 +104,14 @@ export interface Barbershop {
   imageUrl: string;
 }
 
+export interface Barber {
+  id: string;
+  name: string;
+  title: string;
+  imageUrl: string;
+  isActive?: boolean;
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -126,6 +134,7 @@ export interface Booking {
   id: string;
   date: string;
   status: "CONFIRMED" | "COMPLETED" | "CANCELED" | "NO_SHOW";
+  barber?: Pick<Barber, "id" | "name" | "title" | "imageUrl"> | null;
   service: Service & { barbershop: Barbershop };
 }
 

@@ -49,9 +49,25 @@ model Barbershop {
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
   services     BarbershopService[]
+  barbers      Barber[]
   staff        User[]              @relation("BarbershopStaff")
   blocks       ScheduleBlock[]
   openingHours OpeningHour[]
+}
+
+model Barber {
+  id           String     @id @default(uuid())
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  name         String
+  title        String     @default("Barbeiro")
+  imageUrl     String     @default("")
+  isActive     Boolean    @default(true)
+  bookings     Booking[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([barbershopId, isActive])
 }
 
 model BarbershopService {
@@ -79,11 +95,14 @@ model Booking {
   service   BarbershopService @relation(fields: [serviceId], references: [id])
   date      DateTime
   status    String            @default("CONFIRMED")
+  barberId  String?
+  barber    Barber?           @relation(fields: [barberId], references: [id], onDelete: SetNull)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 
   @@index([serviceId, date])
   @@index([userId, date])
+  @@index([barberId, date])
 }
 
 model ScheduleBlock {

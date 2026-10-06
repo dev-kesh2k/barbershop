@@ -8,7 +8,10 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 COPY prisma ./prisma
-RUN npx prisma generate
+# O schema do repositório fica em SQLite para o desenvolvimento local.
+# No Hub o banco é Postgres; o cliente precisa nascer com esse provider.
+RUN sed -i 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma \
+ && npx prisma generate
 
 COPY tsconfig.json ./
 COPY src ./src
@@ -29,6 +32,7 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/dist ./dist
 COPY prisma ./prisma
+RUN sed -i 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma
 
 EXPOSE 4000
 

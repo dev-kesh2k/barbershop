@@ -1,8 +1,9 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import Thumb from "../components/Thumb";
 import { ApiError, api, type Booking } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { formatDdMmYyTime } from "../lib/format";
+import { formatDdMmYyTime, formatMoney } from "../lib/format";
 import "./Bookings.css";
 
 const statusLabel: Record<Booking["status"], string> = {
@@ -12,7 +13,16 @@ const statusLabel: Record<Booking["status"], string> = {
   NO_SHOW: "Não compareceu",
 };
 
+type Filter = "upcoming" | "past" | "canceled";
+
 const PHONE_KEY = "barbershop_guest_phone";
+
+function bucket(booking: Booking): Filter {
+  if (booking.status === "CANCELED") return "canceled";
+  const when = new Date(booking.date).getTime();
+  if (booking.status === "CONFIRMED" && when >= Date.now()) return "upcoming";
+  return "past";
+}
 
 export default function Bookings() {
   const { user } = useAuth();
@@ -21,6 +31,7 @@ export default function Bookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(Boolean(user));
   const [error, setError] = useState("");
+  const [filter, setFilter] = useState<Filter>("upcoming");
 
   const loadByAuth = () => {
     setLoading(true);
@@ -31,9 +42,7 @@ export default function Bookings() {
         setBookings(data.bookings);
         setLookedUp(true);
       })
-      .catch((err) =>
-        setError(err instanceof ApiError ? err.message : "Erro ao carregar."),
-      )
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Erro ao carregar."))
       .finally(() => setLoading(false));
   };
 
@@ -47,9 +56,7 @@ export default function Bookings() {
         setLookedUp(true);
         localStorage.setItem(PHONE_KEY, value.trim());
       })
-      .catch((err) =>
-        setError(err instanceof ApiError ? err.message : "Erro ao carregar."),
-      )
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Erro ao carregar."))
       .finally(() => setLoading(false));
   };
 
@@ -74,12 +81,6 @@ export default function Bookings() {
     loadByPhone(phone);
   };
 
-  const changePhone = () => {
-    setLookedUp(false);
-    setBookings([]);
-    setError("");
-  };
-
   const cancel = async (id: string) => {
     if (!confirm("Cancelar este agendamento?")) return;
     try {
@@ -95,19 +96,19 @@ export default function Bookings() {
     }
   };
 
+  const visible = bookings
+    .filter((booking) => bucket(booking) === filter)
+    .sort((a, b) => {
+      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      return filter === "upcoming" ? diff : -diff;
+    });
+
   if (!user && !lookedUp) {
     return (
       <div className="bookings-page">
-        <header className="bookings-hero">
-          <p className="eyebrow">Agenda</p>
-          <h1 className="page-title">Meus agendamentos</h1>
-          <p className="page-subtitle">
-            Informe seu telefone para ver os horários marcados.
-          </p>
-        </header>
-
+        <h1 className="page-title">Meus agendamentos</h1>
+        <p className="page-subtitle">Informe o telefone usado na reserva.</p>
         {error && <div className="alert alert-error">{error}</div>}
-
         <form className="lookup-card" onSubmit={submitPhone}>
           <div className="form-group">
             <label className="label" htmlFor="lookupPhone">
@@ -135,66 +136,89 @@ export default function Bookings() {
 
   return (
     <div className="bookings-page">
-      <header className="bookings-hero">
-        <p className="eyebrow">Agenda</p>
-        <h1 className="page-title">Meus agendamentos</h1>
-        <p className="page-subtitle">
-          {user ? "Gerencie seus horários marcados." : `Telefone ${phone}`}
-        </p>
-      </header>
-
+      <h1 className="page-title">Meus agendamentos</h1>
       {!user && (
-        <button type="button" className="btn btn-secondary btn-sm change-phone" onClick={changePhone}>
+        <button
+          type="button"
+          className="text-btn"
+          onClick={() => {
+            setLookedUp(false);
+            setBookings([]);
+            setError("");
+          }}
+        >
           Trocar telefone
         </button>
       )}
 
+      <div className="tabs" role="tablist">
+        {(
+          [
+            ["upcoming", "Próximos"],
+            ["past", "Passados"],
+            ["canceled", "Cancelados"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={`tab ${filter === id ? "active" : ""}`}
+            onClick={() => setFilter(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {error && <div className="alert alert-error">{error}</div>}
 
       {loading ? (
-        <div className="bookings-loading">
-          <div className="bookings-spinner" />
+        <div className="center-state">
+          <div className="spinner" />
           <p>Carregando...</p>
         </div>
-      ) : bookings.length === 0 ? (
+      ) : visible.length === 0 ? (
         <div className="empty-state">
-          <p>Você ainda não tem agendamentos.</p>
-          <Link to="/" className="btn btn-primary" style={{ marginTop: "1rem" }}>
-            Agendar horário
-          </Link>
+          <p>
+            {filter === "upcoming"
+              ? "Nenhum horário por vir."
+              : filter === "past"
+                ? "Nenhum horário passado."
+                : "Nenhum horário cancelado."}
+          </p>
+          {filter === "upcoming" && (
+            <Link to="/agendar" className="btn btn-primary">
+              Agendar horário
+            </Link>
+          )}
         </div>
       ) : (
         <div className="bookings-list">
-          {bookings.map((booking) => {
-            const d = new Date(booking.date);
-            const canCancel =
-              booking.status === "CONFIRMED" && d.getTime() > Date.now();
-
+          {visible.map((booking) => {
+            const when = new Date(booking.date);
+            const canCancel = booking.status === "CONFIRMED" && when.getTime() > Date.now();
             return (
               <article key={booking.id} className="booking-card">
-                <div className="booking-main">
-                  <strong>{booking.service.name}</strong>
-                  <p className="booking-when">
-                    {formatDdMmYyTime(d)}
-                  </p>
-                  <div className="booking-meta">
+                <Thumb src={booking.service.imageUrl} alt="" />
+                <div>
+                  <div className="booking-top">
+                    <strong>{booking.service.name}</strong>
                     <span className={`badge badge-${booking.status.toLowerCase()}`}>
                       {statusLabel[booking.status]}
                     </span>
-                    <span className="booking-price">
-                      R$ {booking.service.price.toFixed(2)}
-                    </span>
                   </div>
+                  <p className="booking-shop">
+                    {booking.barber?.name ?? booking.service.barbershop?.name}
+                  </p>
+                  <p className="booking-when">
+                    {formatDdMmYyTime(when)} · {formatMoney(booking.service.price)}
+                  </p>
+                  {canCancel && (
+                    <button type="button" className="booking-cancel" onClick={() => cancel(booking.id)}>
+                      Cancelar
+                    </button>
+                  )}
                 </div>
-                {canCancel && (
-                  <button
-                    type="button"
-                    className="btn btn-danger btn-sm"
-                    onClick={() => cancel(booking.id)}
-                  >
-                    Cancelar
-                  </button>
-                )}
               </article>
             );
           })}

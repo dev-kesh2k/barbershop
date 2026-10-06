@@ -21,6 +21,7 @@ const overlaps = (aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) =>
 
 const createSchema = z.object({
   serviceId: z.string().min(1),
+  barberId: z.string().min(1).optional(),
   date: z.string().datetime({ offset: true }).or(z.string().datetime()),
   guestName: z.string().min(2).optional(),
   guestPhone: z.string().min(8).optional(),
@@ -61,6 +62,7 @@ function mapBookings<T extends { service: { price: unknown } }>(bookings: T[]) {
 }
 
 const bookingInclude = {
+  barber: { select: { id: true, name: true, title: true, imageUrl: true } },
   service: {
     include: {
       barbershop: {
@@ -167,6 +169,28 @@ router.post("/", optionalAuth, asyncHandler(async (req, res) => {
     return;
   }
 
+  const activeBarbers = await prisma.barber.count({
+    where: { barbershopId: service.barbershopId, isActive: true },
+  });
+  if (activeBarbers > 0 && !parsed.data.barberId) {
+    res.status(400).json({ error: "Escolha o barbeiro." });
+    return;
+  }
+
+  if (parsed.data.barberId) {
+    const barber = await prisma.barber.findFirst({
+      where: {
+        id: parsed.data.barberId,
+        barbershopId: service.barbershopId,
+        isActive: true,
+      },
+    });
+    if (!barber) {
+      res.status(404).json({ error: "Barbeiro indisponível." });
+      return;
+    }
+  }
+
   const openingHours = withDefaults(
     await prisma.openingHour.findMany({
       where: { barbershopId: service.barbershopId },
@@ -199,7 +223,11 @@ router.post("/", optionalAuth, asyncHandler(async (req, res) => {
         status: { not: BookingStatus.CANCELED },
         service: { barbershopId: service.barbershopId },
       },
-      select: { date: true, service: { select: { durationMinutes: true } } },
+      select: {
+        date: true,
+        barberId: true,
+        service: { select: { durationMinutes: true } },
+      },
     }),
     prisma.scheduleBlock.findFirst({
       where: {
@@ -215,14 +243,19 @@ router.post("/", optionalAuth, asyncHandler(async (req, res) => {
     return;
   }
 
-  const conflict = sameDayBookings.some((booking) =>
-    overlaps(
+  const conflict = sameDayBookings.some((booking) => {
+    const sameChair =
+      !parsed.data.barberId ||
+      booking.barberId === parsed.data.barberId ||
+      booking.barberId == null;
+    if (!sameChair) return false;
+    return overlaps(
       bookingDate,
       endsAt,
       booking.date,
       addMinutes(booking.date, booking.service.durationMinutes),
-    ),
-  );
+    );
+  });
 
   if (conflict) {
     res.status(409).json({ error: "Esse horário acabou de ser ocupado. Escolha outro." });
@@ -232,10 +265,12 @@ router.post("/", optionalAuth, asyncHandler(async (req, res) => {
   const booking = await prisma.booking.create({
     data: {
       serviceId: parsed.data.serviceId,
+      barberId: parsed.data.barberId,
       date: bookingDate,
       userId,
     },
     include: {
+      barber: { select: { id: true, name: true, title: true, imageUrl: true } },
       service: {
         include: { barbershop: { select: { id: true, name: true, imageUrl: true } } },
       },
@@ -331,6 +366,7 @@ router.delete("/:id", optionalAuth, asyncHandler(async (req, res) => {
           barbershop: { select: { id: true, name: true, imageUrl: true } },
         },
       },
+      barber: { select: { id: true, name: true, title: true, imageUrl: true } },
     },
   });
 

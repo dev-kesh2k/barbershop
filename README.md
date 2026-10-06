@@ -35,6 +35,27 @@ Vite em `http://127.0.0.1:5173/barbershop/` com proxy:
 
 `/barbershop/api/*` → `http://127.0.0.1:4000/*`
 
+### App (celular e navegador)
+
+O app em `mobile/` é Expo: o mesmo código abre no celular e na web, usando a API do backend.
+
+```bash
+cd mobile
+npm install
+npx expo start          # celular (Expo Go) e opções de plataforma
+npx expo start --web    # navegador
+```
+
+No celular, use o Expo Go na mesma rede Wi-Fi. No navegador, as rotas são `/`, `/agendar`, `/servicos`, `/agenda`, `/entrar` e `/admin`. No computador, o cliente fica na coluna do celular; o painel do admin ocupa mais largura. No emulador Android, a API local é `http://10.0.2.2:4002`. No simulador iOS e no navegador, `http://127.0.0.1:4002`.
+
+Para apontar outro endereço:
+
+```bash
+EXPO_PUBLIC_API_URL=http://192.168.0.10:4002 npx expo start
+```
+
+O backend precisa escutar em `0.0.0.0` (já é o padrão) e a porta local do exemplo é `4002`.
+
 ### Contas seed
 
 | Papel    | E-mail                   | Senha      |

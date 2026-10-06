@@ -51,6 +51,7 @@ router.get("/:id", asyncHandler(async (req, res) => {
     where: { id: req.params.id },
     include: {
       services: { where: { isActive: true }, orderBy: { name: "asc" } },
+      barbers: { where: { isActive: true }, orderBy: { name: "asc" } },
       openingHours: {
         select: { weekday: true, opensAt: true, closesAt: true, isClosed: true },
       },
@@ -62,7 +63,7 @@ router.get("/:id", asyncHandler(async (req, res) => {
     return;
   }
 
-  const { openingHours, services, ...rest } = barbershop;
+  const { openingHours, services, barbers, ...rest } = barbershop;
   res.json({
     barbershop: {
       ...rest,
@@ -71,6 +72,7 @@ router.get("/:id", asyncHandler(async (req, res) => {
         ...s,
         price: Number(s.price),
       })),
+      barbers,
       openingHours: withDefaults(openingHours),
     },
   });
@@ -80,6 +82,7 @@ router.get("/:id/slots", asyncHandler(async (req, res) => {
   const serviceId =
     typeof req.query.serviceId === "string" ? req.query.serviceId : "";
   const dateStr = typeof req.query.date === "string" ? req.query.date : "";
+  const barberId = typeof req.query.barberId === "string" ? req.query.barberId : "";
 
   if (!serviceId || !dateStr) {
     res.status(400).json({ error: "serviceId e date são obrigatórios." });
@@ -93,6 +96,16 @@ router.get("/:id/slots", asyncHandler(async (req, res) => {
   if (!service) {
     res.status(404).json({ error: "Serviço não encontrado." });
     return;
+  }
+
+  if (barberId) {
+    const barber = await prisma.barber.findFirst({
+      where: { id: barberId, barbershopId: req.params.id, isActive: true },
+    });
+    if (!barber) {
+      res.status(404).json({ error: "Barbeiro não encontrado." });
+      return;
+    }
   }
 
   let day: Date;
@@ -125,7 +138,11 @@ router.get("/:id/slots", asyncHandler(async (req, res) => {
         status: { not: BookingStatus.CANCELED },
         service: { barbershopId: req.params.id },
       },
-      select: { date: true, service: { select: { durationMinutes: true } } },
+      select: {
+        date: true,
+        barberId: true,
+        service: { select: { durationMinutes: true } },
+      },
     }),
     prisma.scheduleBlock.findMany({
       where: {
@@ -150,14 +167,17 @@ router.get("/:id/slots", asyncHandler(async (req, res) => {
     );
     if (blocked) return false;
 
-    const conflict = bookings.some((booking) =>
-      overlaps(
+    const conflict = bookings.some((booking) => {
+      const sameChair =
+        !barberId || booking.barberId === barberId || booking.barberId == null;
+      if (!sameChair) return false;
+      return overlaps(
         slotStart,
         slotEnd,
         booking.date,
         addMinutes(booking.date, booking.service.durationMinutes),
-      ),
-    );
+      );
+    });
     return !conflict;
   });
 
